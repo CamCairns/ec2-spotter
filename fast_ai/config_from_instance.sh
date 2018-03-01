@@ -34,14 +34,16 @@ else
 	instanceId=$instance_id
 fi
 
-# By default, AWS will delete this volume if the instance is terminated. 
+# By default, AWS will delete this volume if the instance is terminated.
 # We need this volume for the spot instance, so let's fix this.
+echo "aws ec2 modify-instance-attribute ... "
 aws ec2 modify-instance-attribute --instance-id $instanceId --block-device-mappings "[{\"DeviceName\": \"/dev/sda1\",\"Ebs\":{\"DeleteOnTermination\":false}}]"
 
 # Get the volume of the instance
 export volumeId=`aws ec2 describe-instances --instance-ids $instanceId --output text --query 'Reservations[*].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId'`
 
 # name the volume of this instance
+echo "aws ec2 create-tags ... "
 aws ec2 create-tags --resources $volumeId --tags Key=Name,Value="${name}-volume"
 
 # Get the Elastic IP id
@@ -49,7 +51,7 @@ export ip=`aws ec2 describe-instances --instance-ids $instanceId --output text -
 # Supress errors if this is not an elastic ip
 export elasticId=`aws ec2 describe-addresses --public-ips $ip --output text --query 'Addresses[0].AllocationId' 2>/dev/null`
 # We want empty elastic id if not present, not None
-if [ "$elasticId" = "None" ] 
+if [ "$elasticId" = "None" ]
 then
 	export elasticId=
 fi
@@ -73,12 +75,14 @@ export region=`aws configure get region`
 # The ami to boot up the spot instance with.
 # Ubuntu-xenial-16.04 in diff regions.
 # Ubuntu 16.04.1 LTS
-if [ $region = "us-west-2" ]; then 
+if [ $region = "us-west-2" ]; then
 	export ami=ami-7c803d1c # Oregon
-elif [ $region = "eu-west-1" ]; then 
+elif [ $region = "eu-west-1" ]; then
 	export ami=ami-d8f4deab # Ireland
 elif [ $region = "us-east-1" ]; then
   	export ami=ami-6edd3078 # Virginia
+elif [ $region = "ap-southeast-2" ]; then
+    export ami= ami-fe71759d # Sydney
 fi
 echo 'If you are using Amazon Deep Learning AMI, do not forget to change parameter ec2spotter_preboot_image_id in ../my.conf , otherwise the root swap script will fail!'
 
@@ -90,7 +94,7 @@ export config_file=../my.conf
 cat > $config_file <<EOL
 # Name of root volume.
 ec2spotter_volume_name=${name}-volume
-# Location (zone) of root volume. If not the same as ec2spotter_launch_zone, 
+# Location (zone) of root volume. If not the same as ec2spotter_launch_zone,
 # a copy will be created in ec2spotter_launch_zone.
 # Can be left blank, if the same as ec2spotter_launch_zone
 ec2spotter_volume_zone=$zone
