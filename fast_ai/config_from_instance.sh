@@ -82,7 +82,9 @@ elif [ $region = "eu-west-1" ]; then
 elif [ $region = "us-east-1" ]; then
   	export ami=ami-6edd3078 # Virginia
 elif [ $region = "ap-southeast-2" ]; then
-    export ami= ami-fe71759d # Sydney
+       export ami=ami-fe71759d # Sydney
+       #export ami=ami-39ec055b
+	   # export ami=ami-0789a5fb42dcccc10
 fi
 echo 'If you are using Amazon Deep Learning AMI, do not forget to change parameter ec2spotter_preboot_image_id in ../my.conf , otherwise the root swap script will fail!'
 
